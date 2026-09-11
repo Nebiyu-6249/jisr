@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { RATE_LIMITS, config, features, log } from '@jisr/core';
 import { audit, pruneRateLimits, repo, withTenant } from '@jisr/db';
 import { createCaseTask } from '@jisr/integrations';
-import { validatedTask } from '../lib/task-kit.js';
-import { dashboardCaseUrl } from '../lib/case-context.js';
+import { validatedTask } from '../lib/task-kit';
+import { dashboardCaseUrl } from '../lib/case-context';
 
 /** Twilio delivery receipts. Used to show a broadcast as delivered, not just sent. */
 export const deliveryStatus = validatedTask({

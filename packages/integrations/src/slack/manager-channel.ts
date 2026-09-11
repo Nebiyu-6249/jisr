@@ -7,7 +7,7 @@ import {
   type CaseCategory,
 } from '@jisr/core';
 import { repo, withTenant, audit, type Case } from '@jisr/db';
-import { signedUrl } from '../gcs.js';
+import { signedUrl } from '../gcs';
 import {
   buildBroadcastAckCard,
   buildCaseCard,
@@ -15,8 +15,8 @@ import {
   buildPaySupervisorCard,
   buildSpeakupCard,
   type ActionButton,
-} from './blocks.js';
-import { slackTransport, type MessageRef } from './transport.js';
+} from './blocks';
+import { slackTransport, type MessageRef } from './transport';
 
 /**
  * The only two ways a case reaches Slack.

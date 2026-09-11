@@ -1,5 +1,5 @@
 import { IntakeUnderstanding, SUPPORTED_LANGUAGE_CODES, wrapUntrusted } from '@jisr/core';
-import { NO_PROMISE_RULE, glossaryRule, systemPrompt } from './shared.js';
+import { NO_PROMISE_RULE, glossaryRule, systemPrompt } from './shared';
 
 /** C1 step 7 — the one structured call that turns a transcript into a decision. */
 export const UNDERSTAND_PROMPT_VERSION = 'understand@3';

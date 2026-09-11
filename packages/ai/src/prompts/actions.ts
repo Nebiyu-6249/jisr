@@ -1,5 +1,5 @@
 import { SUGGESTABLE_ACTIONS, SuggestedActions, wrapUntrusted } from '@jisr/core';
-import { systemPrompt } from './shared.js';
+import { systemPrompt } from './shared';
 
 /**
  * C2 — the two or three one-tap actions on a case card.

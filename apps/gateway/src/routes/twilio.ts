@@ -22,7 +22,7 @@ import {
   withTenant,
 } from '@jisr/db';
 import { EMPTY_TWIML, sendWhatsApp, validateTwilioSignature } from '@jisr/integrations';
-import { publicUrlFor } from '../lib/public-url.js';
+import { publicUrlFor } from '../lib/public-url';
 
 /**
  * C1 step 1-3. The gateway's whole job on an inbound message:

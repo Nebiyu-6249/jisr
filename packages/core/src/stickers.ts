@@ -1,4 +1,4 @@
-import { stripInvisible } from './invisible.js';
+import { stripInvisible } from './invisible';
 
 /**
  * F1 — tap-to-report. A sticker encodes a wa.me link that pre-fills `JISR-<CODE>`

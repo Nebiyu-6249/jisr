@@ -2,7 +2,7 @@ import { createChannel, defineChannelCommand } from '@copilotkit/channels';
 import { tasks } from '@trigger.dev/sdk';
 import { z } from 'zod';
 import { log, sanitizeText } from '@jisr/core';
-import { applyDecision } from '../routes/slack.js';
+import { applyDecision } from '../routes/slack';
 
 /**
  * The Jisr Channel, loaded by the CopilotKit Channels runtime.

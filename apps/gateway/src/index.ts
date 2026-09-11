@@ -1,11 +1,11 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { log, redactedConfig } from '@jisr/core';
-import { bodyLimit, requestLog, securityHeaders } from './middleware/security.js';
-import { healthRoutes } from './routes/health.js';
-import { twilioRoutes } from './routes/twilio.js';
-import { slackRoutes } from './routes/slack.js';
-import { startChannelsRuntime } from './channels/runtime.js';
+import { bodyLimit, requestLog, securityHeaders } from './middleware/security';
+import { healthRoutes } from './routes/health';
+import { twilioRoutes } from './routes/twilio';
+import { slackRoutes } from './routes/slack';
+import { startChannelsRuntime } from './channels/runtime';
 
 /**
  * The Jisr gateway.

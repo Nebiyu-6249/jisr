@@ -12,10 +12,10 @@ import {
 } from '@jisr/core';
 import { audit, encryptField, hashToken, repo, withTenant } from '@jisr/db';
 import { notifyManagers, slackTransport, uploadMedia } from '@jisr/integrations';
-import { chargeTokens } from '../lib/budget.js';
-import { sendToWorker } from '../lib/outbound.js';
-import { validatedTask } from '../lib/task-kit.js';
-import { slaDueAt } from '../lib/case-context.js';
+import { chargeTokens } from '../lib/budget';
+import { sendToWorker } from '../lib/outbound';
+import { validatedTask } from '../lib/task-kit';
+import { slaDueAt } from '../lib/case-context';
 
 /**
  * F2 — speak-up mode.

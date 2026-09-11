@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { ConfigError, config } from '@jisr/core';
-import * as schema from './schema.js';
+import * as schema from './schema';
 
 /**
  * One pool per process. The app connects as `jisr_app`, which has no DDL rights

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { getDb, type Db, type DbOrTx } from './client.js';
+import { getDb, type Db, type DbOrTx } from './client';
 
 /**
  * Tenant isolation, mandatory layer.

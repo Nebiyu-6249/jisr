@@ -14,10 +14,10 @@ import {
   fga,
   slackTransport,
 } from '@jisr/integrations';
-import { chargeTokens } from '../lib/budget.js';
-import { sendToWorker } from '../lib/outbound.js';
-import { trigger, validatedTask } from '../lib/task-kit.js';
-import { outboundQueue } from '../queues.js';
+import { chargeTokens } from '../lib/budget';
+import { sendToWorker } from '../lib/outbound';
+import { trigger, validatedTask } from '../lib/task-kit';
+import { outboundQueue } from '../queues';
 
 /**
  * C4 — broadcasts.

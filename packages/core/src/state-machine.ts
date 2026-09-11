@@ -1,4 +1,4 @@
-import type { CaseStatus } from './schemas.js';
+import type { CaseStatus } from './schemas';
 
 /**
  * The case state machine from the brief, as data. Every transition is named so

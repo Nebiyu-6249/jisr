@@ -7,7 +7,7 @@ import {
   type CaseSeverity,
   assertTransition,
 } from '@jisr/core';
-import { getDb, type DbOrTx } from './client.js';
+import { getDb, type DbOrTx } from './client';
 import {
   assets,
   auditLog,
@@ -30,7 +30,7 @@ import {
   type NewCase,
   type Site,
   type Worker,
-} from './schema.js';
+} from './schema';
 
 /**
  * The tenant-scoped repository. Every function here takes `companyId` and filters
@@ -407,6 +407,15 @@ export function repo(companyId: string, tx: DbOrTx = getDb()) {
         })
         .returning();
       return row!;
+    },
+
+    async recentBroadcasts(limit = 20) {
+      return tx
+        .select()
+        .from(broadcasts)
+        .where(owned(broadcasts))
+        .orderBy(desc(broadcasts.createdAt))
+        .limit(Math.min(limit, 100));
     },
 
     async broadcastById(broadcastId: string) {

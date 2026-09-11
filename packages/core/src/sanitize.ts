@@ -1,4 +1,4 @@
-import { BIDI_RE, CONTROL_RE } from './invisible.js';
+import { BIDI_RE, CONTROL_RE } from './invisible';
 
 /**
  * Input normalisation at every boundary: NFC, control characters stripped,

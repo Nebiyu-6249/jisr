@@ -1,5 +1,5 @@
-import { UAE_EMERGENCY_NUMBERS } from './emergency.js';
-import { DEFAULT_LANGUAGE } from './languages.js';
+import { UAE_EMERGENCY_NUMBERS } from './emergency';
+import { DEFAULT_LANGUAGE } from './languages';
 
 /**
  * Worker-facing copy.
