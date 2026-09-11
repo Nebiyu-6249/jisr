@@ -1,0 +1,36 @@
+{
+  "name": "jisr",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm --filter @jisr/dashboard typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:gateway": "pnpm --filter @jisr/gateway dev",
+    "dev:dashboard": "pnpm --filter @jisr/dashboard dev",
+    "dev:worker": "pnpm --filter @jisr/worker dev",
+    "db:generate": "pnpm --filter @jisr/db generate",
+    "db:migrate": "pnpm --filter @jisr/db migrate",
+    "seed": "tsx seed/seed.ts",
+    "stickers": "tsx scripts/generate-stickers.ts",
+    "language-test": "tsx scripts/language-test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "protobufjs",
+      "sharp",
+      "@depot/cli"
+    ]
+  }
+}
