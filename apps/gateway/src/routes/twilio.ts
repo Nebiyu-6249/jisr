@@ -48,11 +48,12 @@ twilioRoutes.post(WHATSAPP_WEBHOOK_PATH, async (c) => {
   const signature = c.req.header('x-twilio-signature');
   const url = publicUrlFor(WHATSAPP_WEBHOOK_PATH, new URL(c.req.url).search);
 
-  if (!validateTwilioSignature({ signature, url, params })) {
+  const check = validateTwilioSignature({ signature, url, params });
+  if (!check.valid) {
     await audit({
       event: 'twilio_signature_invalid',
-      severity: 'warn',
-      details: { path: WHATSAPP_WEBHOOK_PATH, hasSignature: Boolean(signature) },
+      severity: check.reason === 'not_configured' ? 'critical' : 'warn',
+      details: { path: WHATSAPP_WEBHOOK_PATH, reason: check.reason },
     });
     // 403 with no body: a probe learns nothing about why it failed.
     return c.text('', 403);
@@ -168,8 +169,13 @@ twilioRoutes.post(STATUS_WEBHOOK_PATH, async (c) => {
   const signature = c.req.header('x-twilio-signature');
   const url = publicUrlFor(STATUS_WEBHOOK_PATH, new URL(c.req.url).search);
 
-  if (!validateTwilioSignature({ signature, url, params })) {
-    await audit({ event: 'twilio_signature_invalid', severity: 'warn', details: { path: STATUS_WEBHOOK_PATH } });
+  const check = validateTwilioSignature({ signature, url, params });
+  if (!check.valid) {
+    await audit({
+      event: 'twilio_signature_invalid',
+      severity: check.reason === 'not_configured' ? 'critical' : 'warn',
+      details: { path: STATUS_WEBHOOK_PATH, reason: check.reason },
+    });
     return c.text('', 403);
   }
 

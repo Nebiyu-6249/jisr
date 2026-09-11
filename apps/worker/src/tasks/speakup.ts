@@ -14,7 +14,8 @@ import { audit, encryptField, hashToken, repo, withTenant } from '@jisr/db';
 import { notifyManagers, slackTransport, uploadMedia } from '@jisr/integrations';
 import { chargeTokens } from '../lib/budget';
 import { sendToWorker } from '../lib/outbound';
-import { validatedTask } from '../lib/task-kit';
+import { trigger, validatedTask } from '../lib/task-kit';
+import { awaitDecisions } from './case';
 import { slaDueAt } from '../lib/case-context';
 
 /**
@@ -199,7 +200,32 @@ export const speakupReport = validatedTask({
       caseId: null,
     });
 
+    // A speak-up case has no site and so no case.route. It still needs a
+    // waitpoint, or HR's "Ask the reporter" would have nothing to complete.
+    await trigger('speakup.await', { companyId, caseId: created.id });
+
     return { reported: true as const, casePublicId: created.publicId };
+  },
+});
+
+/**
+ * Holds the waitpoint HR's buttons complete. Speak-up has no SLA escalation:
+ * there is no site supervisor to escalate to, and the report is already with the
+ * only people who may see it.
+ */
+export const speakupAwait = validatedTask({
+  id: 'speakup.await',
+  schema: z.object({ companyId: z.string().uuid(), caseId: z.string().uuid() }),
+  maxDuration: 3600,
+  run: async ({ companyId, caseId }) => {
+    const outcome = await awaitDecisions({
+      companyId,
+      caseId,
+      firstTimeout: '55m',
+      laterTimeout: '55m',
+      maxRounds: 8,
+    });
+    return { outcome };
   },
 });
 

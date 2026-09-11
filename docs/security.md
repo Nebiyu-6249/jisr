@@ -254,3 +254,25 @@ change — all of which the Auth0 configuration above handles.
 
 The speak-up **break-glass reveal is not implemented**, so no UI path reveals a
 reporter's identity.
+
+---
+
+## Verified, not asserted
+
+The checks below were run against the built code, not just written down.
+
+| Check | Result |
+|---|---|
+| Unknown route on the gateway | `404`, empty body |
+| Unsigned Twilio webhook | `403`, empty body, audited |
+| Twilio webhook when `TWILIO_AUTH_TOKEN` is missing | `403` with a **critical** audit event — it fails closed, it does not 500 |
+| Unsigned Slack interactivity | `403`, audited |
+| Body over 64 KB on a webhook | `413`, refused before parsing |
+| Gateway response headers | CSP `default-src 'none'`, HSTS, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and **no** `Access-Control-*` |
+| Audit write with no database | The request still completes; the failure is logged loudly |
+| FGA with no store configured | Every check returns `false`; `assertCan` throws |
+| A speak-up ciphertext against the phone key | Throws — the keys are not interchangeable |
+| `pnpm audit --prod --audit-level=high` | Clean (four high-severity transitive advisories fixed with pinned overrides) |
+
+Re-run them with `pnpm test`, and the gateway ones by booting it and curling the
+paths in the table.

@@ -93,7 +93,7 @@ status callback → `/webhooks/twilio/status`.
 
 ```bash
 pnpm typecheck          # the whole workspace, including the dashboard
-pnpm test               # 81 unit and integration tests
+pnpm test               # 101 unit and integration tests
 pnpm stickers           # writes an A4 sticker sheet to tmp/stickers.html
 pnpm language-test      # renders one sentence through both TTS engines, per language
 ```
@@ -152,7 +152,7 @@ Started from an empty repository at the event. The milestone commits:
 | **M1** | **First light.** A WhatsApp voice note becomes a structured English case card in the right Slack channel, via Trigger.dev, with an OpenRouter fallback that can be forced from env |
 | **M2** | Clarify, read-back, one-tap actions, the voice reply, SLA escalation, broadcasts with acknowledgement tracking, the emergency path, the first-contact notice, and F1 tap-to-report |
 | **M3** | F2 speak-up with a sealed identity, F3 two-person pay with CIBA and hash binding, and F4 the ops dashboard with "Ask Jisr" |
-| **M4** | Hardening: the security checklist, row-level security, three failure drills, and the docs |
+| **M4** | Hardening: fail-closed webhook validation, the audit path made non-fatal, high-severity transitive advisories pinned out, three failure drills, and the docs |
 
 `git log --oneline` shows them in order.
 

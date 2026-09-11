@@ -34,7 +34,12 @@ const ButtonValue = z
   .strict();
 
 const ModalValue = z
-  .object({ caseId: z.string().uuid().optional(), adjustmentId: z.string().uuid().optional() })
+  .object({
+    caseId: z.string().uuid().optional(),
+    adjustmentId: z.string().uuid().optional(),
+    /** Modals carry their tenant: a view_submission has no channel to resolve from. */
+    companyId: z.string().uuid().optional(),
+  })
   .passthrough();
 
 slackRoutes.post('/slack/interactivity', async (c) => {
@@ -164,9 +169,14 @@ async function handleBlockAction(payload: SlackInteraction): Promise<void> {
         ? buildEditHoursModal({
             adjustmentId: adjustment.id,
             caseId: parsed.data.caseId,
+            companyId: resolved.companyId,
             currentHoursX100: adjustment.hoursX100,
           })
-        : buildRejectModal({ adjustmentId: adjustment.id, caseId: parsed.data.caseId });
+        : buildRejectModal({
+            adjustmentId: adjustment.id,
+            caseId: parsed.data.caseId,
+            companyId: resolved.companyId,
+          });
 
     await slackTransport().openModal(payload.trigger_id, view);
     return;
@@ -175,9 +185,18 @@ async function handleBlockAction(payload: SlackInteraction): Promise<void> {
   if (actionId === 'jisr_reply_freeform') {
     const parsed = ModalValue.safeParse(safeJson(action?.value));
     if (!parsed.success || !parsed.data.caseId || !payload.trigger_id) return;
-    const resolved = await resolveActor({ caseId: parsed.data.caseId, slackUserId, channelId, messageTs });
+    const resolved = await resolveActor({
+      caseId: parsed.data.caseId,
+      slackUserId,
+      channelId,
+      messageTs,
+      ...(parsed.data.companyId ? { companyId: parsed.data.companyId } : {}),
+    });
     if (!resolved) return;
-    await slackTransport().openModal(payload.trigger_id, buildReplyModal(parsed.data.caseId, resolved.casePublicId));
+    await slackTransport().openModal(
+      payload.trigger_id,
+      buildReplyModal(parsed.data.caseId, resolved.casePublicId, resolved.companyId),
+    );
     return;
   }
 
@@ -206,9 +225,12 @@ async function handleViewSubmission(payload: SlackInteraction): Promise<void> {
     if (!text) return;
     await applyDecision({
       caseId: metadata.data.caseId,
+      // A speak-up thread reply is a question for the reporter, not a decision
+      // relayed to a named worker; both end up in case.relay either way.
       actionName: 'reply_freeform',
       params: { text },
       slackUserId,
+      ...(metadata.data.companyId ? { companyId: metadata.data.companyId } : {}),
     });
     return;
   }
@@ -222,6 +244,7 @@ async function handleViewSubmission(payload: SlackInteraction): Promise<void> {
       caseId: metadata.data.caseId,
       hoursX100: Math.round(hours * 100),
       slackUserId,
+      ...(metadata.data.companyId ? { companyId: metadata.data.companyId } : {}),
     });
     return;
   }
@@ -234,6 +257,7 @@ async function handleViewSubmission(payload: SlackInteraction): Promise<void> {
       actionName: 'reject_pay',
       params: { reason },
       slackUserId,
+      ...(metadata.data.companyId ? { companyId: metadata.data.companyId } : {}),
     });
   }
 }
@@ -245,6 +269,8 @@ interface DecisionInput {
   slackUserId: string;
   channelId?: string;
   messageTs?: string;
+  /** Supplied by a modal submission, which has no channel to resolve from. */
+  companyId?: string;
 }
 
 /**
@@ -269,9 +295,13 @@ export async function applyDecision(input: DecisionInput): Promise<void> {
     return;
   }
 
+  // A speak-up case has no site, so can_act (which resolves through the site)
+  // would deny HR. It is gated by can_view_speakup instead - the same relation
+  // that let them see the report in the first place.
+  const relation = resolved.isSpeakup ? ('can_view_speakup' as const) : ('can_act' as const);
   const allowed = await fga.check({
     user: fga.userRef(resolved.staffId),
-    relation: 'can_act',
+    relation,
     object: fga.caseRef(input.caseId),
   });
   if (!allowed) {
@@ -281,7 +311,7 @@ export async function applyDecision(input: DecisionInput): Promise<void> {
       companyId: resolved.companyId,
       actor: resolved.staffId,
       subject: resolved.casePublicId,
-      details: { relation: 'can_act', action: input.actionName },
+      details: { relation, action: input.actionName },
     });
     return;
   }
@@ -308,6 +338,7 @@ interface ResolvedActor {
   companyId: string;
   casePublicId: string;
   decisionTokenId: string | null;
+  isSpeakup: boolean;
 }
 
 /**
@@ -319,6 +350,7 @@ async function resolveActor(input: {
   slackUserId: string;
   channelId?: string;
   messageTs?: string;
+  companyId?: string;
 }): Promise<ResolvedActor | null> {
   if (!input.slackUserId) return null;
 
@@ -339,7 +371,9 @@ async function resolveActor(input: {
     return null;
   }
 
-  const companyId = byCard?.companyId;
+  // The card is authoritative when we have it; a modal submission falls back to
+  // the tenant its private_metadata carried.
+  const companyId = byCard?.companyId ?? input.companyId;
   if (!companyId) {
     log.warn('slack_action_unresolvable', { caseId: input.caseId });
     return null;
@@ -355,6 +389,7 @@ async function resolveActor(input: {
       companyId,
       casePublicId: caseRow.publicId,
       decisionTokenId: caseRow.decisionTokenId,
+      isSpeakup: caseRow.isSpeakup,
     };
   });
 }
