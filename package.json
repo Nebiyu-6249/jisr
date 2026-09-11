@@ -31,6 +31,9 @@
       "protobufjs",
       "sharp",
       "@depot/cli"
-    ]
+    ],
+    "overrides": {
+      "zod": "3.25.76"
+    }
   }
 }
