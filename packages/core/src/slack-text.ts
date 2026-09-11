@@ -15,7 +15,8 @@ export function escapeSlackText(input: string): string {
  */
 export function slackQuote(input: string, maxLength = 300): string {
   const cleaned = stripInvisible(input).replace(/\s+/g, ' ').trim();
-  const clipped = cleaned.length > maxLength ? `${cleaned.slice(0, maxLength - 1)}...` : cleaned;
+  // The ellipsis counts towards the cap; a cap that can be exceeded is not a cap.
+  const clipped = cleaned.length > maxLength ? `${cleaned.slice(0, Math.max(0, maxLength - 3))}...` : cleaned;
   return escapeSlackText(clipped);
 }
 

@@ -44,6 +44,13 @@ const EnvSchema = z.object({
   /** Shown to workers in the first-contact notice and the unknown-number reply. */
   COMPANY_NAME: z.string().default('Al Noor Contracting'),
 
+  /**
+   * One Slack workspace serves one company in this build. A Slack interaction
+   * carries no tenant of its own, so this is the company those interactions
+   * resolve to. Multi-tenant Slack would key this off the installation id.
+   */
+  DEFAULT_COMPANY_ID: optionalString,
+
   PUBLIC_GATEWAY_URL: optionalString,
   PUBLIC_DASHBOARD_URL: optionalString,
 

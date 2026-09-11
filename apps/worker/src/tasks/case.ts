@@ -63,6 +63,37 @@ export const intakeRoute = validatedTask({
     const { companyId, workerId, understanding } = payload;
     const language = understanding.language || 'en';
 
+    // F2 takes precedence over every other branch: a worker who asked to stay
+    // anonymous must not have their next message land on a normal case.
+    if (features.speakup) {
+      const session = await withTenant(companyId, ({ tx }) => repo(companyId, tx).session(workerId));
+
+      if (session?.speakupPending) {
+        await trigger('speakup.report', {
+          companyId,
+          workerId,
+          messageId: payload.messageId,
+          transcript: payload.transcript,
+          language,
+          severity: understanding.severity ?? 'high',
+          summaryEn: understanding.summaryEn,
+        });
+        return { routed: 'speakup_report' as const };
+      }
+
+      if (session?.speakupCaseId && understanding.intent !== 'policy_question') {
+        await trigger('speakup.followUp', {
+          companyId,
+          caseId: session.speakupCaseId,
+          workerId,
+          transcript: payload.transcript,
+          summaryEn: understanding.summaryEn,
+          language,
+        });
+        return { routed: 'speakup_followup' as const };
+      }
+    }
+
     switch (understanding.intent) {
       case 'broadcast_ack': {
         if (payload.pendingBroadcastId) {
@@ -205,7 +236,7 @@ export const caseOpen = validatedTask({
       });
 
       // Attach the message that started the case, so the card shows its evidence.
-      await r.updateMessage(payload.messageId, { caseId: row.id });
+      if (payload.messageId) await r.updateMessage(payload.messageId, { caseId: row.id });
 
       return { row, assetLabel: asset?.label ?? null };
     });
