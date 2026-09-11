@@ -110,6 +110,7 @@ export async function notifyManagers(
     const card = buildSpeakupCard({
       casePublicId: row.publicId,
       caseId: row.id,
+      companyId,
       severity: severityOf(row),
       summaryEnRedacted: speakup?.summaryEnRedacted ?? row.summaryEn ?? '(no summary)',
       revoicedAudioUrl: speakup?.revoicedMediaId
@@ -135,6 +136,7 @@ export async function notifyManagers(
   const card = buildCaseCard({
     casePublicId: row.publicId,
     caseId: row.id,
+    companyId,
     category: (row.category ?? 'other') as CaseCategory,
     severity: severityOf(row),
     siteName: site?.name ?? null,
@@ -193,6 +195,7 @@ export async function updateCaseCard(
     ? buildSpeakupCard({
         casePublicId: row.publicId,
         caseId: row.id,
+        companyId,
         severity: severityOf(row),
         summaryEnRedacted: row.summaryEn ?? '',
         revoicedAudioUrl: null,
@@ -203,6 +206,7 @@ export async function updateCaseCard(
     : buildCaseCard({
         casePublicId: row.publicId,
         caseId: row.id,
+        companyId,
         category: (row.category ?? 'other') as CaseCategory,
         severity: severityOf(row),
         siteName: site?.name ?? null,

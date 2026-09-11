@@ -21,7 +21,8 @@ export const AskWorkerParams = z
 
 export const AssignParams = z
   .object({
-    staffId: z.string().uuid(),
+    /** Omitted means "assign it to whoever clicked", which is the common case. */
+    staffId: z.string().uuid().optional(),
   })
   .strict();
 

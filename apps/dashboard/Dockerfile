@@ -15,6 +15,9 @@ RUN pnpm --filter @jisr/dashboard build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000
+# Jisr handles workers' personal data. Runtime telemetry is off unless a
+# deployment deliberately turns it on.
+ENV COPILOTKIT_TELEMETRY_DISABLED=true
 COPY --from=builder /app/apps/dashboard/.next/standalone ./
 COPY --from=builder /app/apps/dashboard/.next/static ./apps/dashboard/.next/static
 COPY --from=builder /app/apps/dashboard/public ./apps/dashboard/public

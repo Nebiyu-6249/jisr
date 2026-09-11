@@ -25,25 +25,44 @@ export function isTwilioConfigured(): boolean {
   return Boolean(config.TWILIO_ACCOUNT_SID && config.TWILIO_AUTH_TOKEN && config.TWILIO_WHATSAPP_FROM);
 }
 
+export type SignatureFailure = 'not_configured' | 'missing_signature' | 'mismatch' | 'error';
+
+export interface SignatureCheck {
+  valid: boolean;
+  reason?: SignatureFailure;
+}
+
 /**
  * Validates `X-Twilio-Signature`. `url` must be the full public URL of this
  * request; we build it from PUBLIC_GATEWAY_URL rather than trusting Host, so a
  * spoofed Host header cannot change what gets signed.
+ *
+ * Every failure - including "we have no token to check with" - is a failure, not
+ * an exception. A misconfigured deployment must reject webhooks and say why in
+ * the audit log, not answer 500 and leak a stack.
  */
 export function validateTwilioSignature(input: {
   signature: string | undefined;
   url: string;
   params: Record<string, string>;
-}): boolean {
+}): SignatureCheck {
   if (!config.TWILIO_AUTH_TOKEN) {
-    throw new NotConfiguredError('TWILIO_AUTH_TOKEN (required to validate webhooks)');
+    log.error('twilio_auth_token_missing_rejecting_webhook', {});
+    return { valid: false, reason: 'not_configured' };
   }
-  if (!input.signature) return false;
+  if (!input.signature) return { valid: false, reason: 'missing_signature' };
+
   try {
-    return twilioSdk.validateRequest(config.TWILIO_AUTH_TOKEN, input.signature, input.url, input.params);
+    const ok = twilioSdk.validateRequest(
+      config.TWILIO_AUTH_TOKEN,
+      input.signature,
+      input.url,
+      input.params,
+    );
+    return ok ? { valid: true } : { valid: false, reason: 'mismatch' };
   } catch (error) {
     log.warn('twilio_signature_validation_threw', { error });
-    return false;
+    return { valid: false, reason: 'error' };
   }
 }
 

@@ -18,7 +18,7 @@ export interface AuditInput {
   details?: Record<string, unknown>;
 }
 
-export async function audit(input: AuditInput, tx: DbOrTx = getDb()): Promise<void> {
+export async function audit(input: AuditInput, tx?: DbOrTx): Promise<void> {
   const severity = input.severity ?? 'info';
   const row = {
     companyId: input.companyId ?? null,
@@ -35,7 +35,10 @@ export async function audit(input: AuditInput, tx: DbOrTx = getDb()): Promise<vo
   else log.info(`audit:${input.event}`, logFields);
 
   try {
-    await tx.insert(auditLog).values(row);
+    // Resolved inside the try on purpose: as a default argument, `getDb()` runs
+    // before this block and a missing DATABASE_URL would take down the very
+    // request this call is describing.
+    await (tx ?? getDb()).insert(auditLog).values(row);
   } catch (error) {
     // An audit write must never take down the request it is describing, but it
     // must be loud when it fails.

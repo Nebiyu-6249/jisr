@@ -26,6 +26,7 @@ export interface ActionButton {
 export interface CaseCardInput {
   casePublicId: string;
   caseId: string;
+  companyId: string;
   category: string;
   severity: CaseSeverity;
   siteName: string | null;
@@ -122,13 +123,9 @@ export function buildCaseCard(input: CaseCardInput): { blocks: Block[]; text: st
     blocks.push({
       type: 'actions',
       block_id: `case_actions:${input.caseId}`,
-      elements: input.actions.slice(0, 5).map((button, index) => ({
-        type: 'button',
-        action_id: `jisr_case_action_${index}`,
-        text: { type: 'plain_text', text: button.label.slice(0, 70), emoji: true },
-        ...(button.style ? { style: button.style } : {}),
-        value: JSON.stringify({ caseId: input.caseId, action: button.action, params: button.params }).slice(0, 2000),
-      })),
+      elements: input.actions
+        .slice(0, 5)
+        .map((button, index) => actionElement(button, index, input.caseId, input.companyId)),
     });
   }
 
@@ -140,10 +137,44 @@ export function buildCaseCard(input: CaseCardInput): { blocks: Block[]; text: st
   return { blocks, text: `${input.casePublicId}: ${input.summaryEn}`.slice(0, 300) };
 }
 
+/**
+ * A button that needs words from a human opens a modal instead of completing a
+ * decision: the text has to exist before the action is valid, and a button
+ * cannot carry text nobody has typed yet.
+ */
+const NEEDS_TEXT = new Set(['reply_freeform', 'ask_worker']);
+
+function actionElement(
+  button: ActionButton,
+  index: number,
+  caseId: string,
+  companyId: string,
+): Record<string, unknown> {
+  const opensModal = NEEDS_TEXT.has(button.action) && !hasText(button.params);
+
+  return {
+    type: 'button',
+    action_id: opensModal ? 'jisr_reply_freeform' : `jisr_case_action_${index}`,
+    text: { type: 'plain_text', text: button.label.slice(0, 70), emoji: true },
+    ...(button.style ? { style: button.style } : {}),
+    value: JSON.stringify(
+      opensModal
+        ? { caseId, companyId }
+        : { caseId, action: button.action, params: button.params },
+    ).slice(0, 2000),
+  };
+}
+
+function hasText(params: Record<string, unknown>): boolean {
+  const text = params.text ?? params.question;
+  return typeof text === 'string' && text.trim().length > 0;
+}
+
 /** F2. The speak-up card never shows a name, a number, or the original audio. */
 export interface SpeakupCardInput {
   casePublicId: string;
   caseId: string;
+  companyId: string;
   severity: CaseSeverity;
   summaryEnRedacted: string;
   revoicedAudioUrl: string | null;
@@ -193,10 +224,12 @@ export function buildSpeakupCard(input: SpeakupCardInput): { blocks: Block[]; te
     block_id: `case_actions:${input.caseId}`,
     elements: [
       {
+        // Opens a modal: the question is relayed to the sealed reporter, so it
+        // has to be written before the action means anything.
         type: 'button',
-        action_id: 'jisr_case_action_0',
+        action_id: 'jisr_reply_freeform',
         text: { type: 'plain_text', text: 'Ask the reporter', emoji: true },
-        value: JSON.stringify({ caseId: input.caseId, action: 'ask_worker', params: {} }),
+        value: JSON.stringify({ caseId: input.caseId, companyId: input.companyId }),
       },
       {
         type: 'button',
@@ -445,11 +478,17 @@ export function buildBroadcastPreview(input: {
 }
 
 /** The "Reply in my own words" modal, and the validated hours modal for F3. */
-export function buildReplyModal(caseId: string, casePublicId: string): Record<string, unknown> {
+export function buildReplyModal(
+  caseId: string,
+  casePublicId: string,
+  companyId: string,
+): Record<string, unknown> {
   return {
     type: 'modal',
     callback_id: 'jisr_reply_modal',
-    private_metadata: JSON.stringify({ caseId }),
+    // A view_submission carries no channel or message, so the tenant travels
+    // with the modal rather than being guessed at submit time.
+    private_metadata: JSON.stringify({ caseId, companyId }),
     title: { type: 'plain_text', text: 'Reply to worker' },
     submit: { type: 'plain_text', text: 'Send' },
     close: { type: 'plain_text', text: 'Cancel' },
@@ -482,12 +521,17 @@ export function buildReplyModal(caseId: string, casePublicId: string): Record<st
 export function buildEditHoursModal(input: {
   adjustmentId: string;
   caseId: string;
+  companyId: string;
   currentHoursX100: number;
 }): Record<string, unknown> {
   return {
     type: 'modal',
     callback_id: 'jisr_edit_hours_modal',
-    private_metadata: JSON.stringify({ adjustmentId: input.adjustmentId, caseId: input.caseId }),
+    private_metadata: JSON.stringify({
+      adjustmentId: input.adjustmentId,
+      caseId: input.caseId,
+      companyId: input.companyId,
+    }),
     title: { type: 'plain_text', text: 'Edit hours' },
     submit: { type: 'plain_text', text: 'Recalculate' },
     close: { type: 'plain_text', text: 'Cancel' },
@@ -513,11 +557,19 @@ export function buildEditHoursModal(input: {
   };
 }
 
-export function buildRejectModal(input: { adjustmentId: string; caseId: string }): Record<string, unknown> {
+export function buildRejectModal(input: {
+  adjustmentId: string;
+  caseId: string;
+  companyId: string;
+}): Record<string, unknown> {
   return {
     type: 'modal',
     callback_id: 'jisr_reject_pay_modal',
-    private_metadata: JSON.stringify({ adjustmentId: input.adjustmentId, caseId: input.caseId }),
+    private_metadata: JSON.stringify({
+      adjustmentId: input.adjustmentId,
+      caseId: input.caseId,
+      companyId: input.companyId,
+    }),
     title: { type: 'plain_text', text: 'Reject correction' },
     submit: { type: 'plain_text', text: 'Reject' },
     close: { type: 'plain_text', text: 'Cancel' },

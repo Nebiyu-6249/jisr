@@ -98,6 +98,37 @@ of a type-heavy dependency first.
 
 ---
 
+## Bugs found by the hardening pass
+
+Recorded because each one would have failed silently on stage:
+
+1. **Buttons that needed words could never be pressed.** "Reply in my own words"
+   and "Ask the reporter" carried empty text, which the action catalog correctly
+   rejected — so the click did nothing. They now open a modal instead, and the
+   text exists before the action is valid.
+2. **Modal submissions had no tenant.** A Slack `view_submission` carries no
+   channel or message, so the company could not be resolved and every modal
+   reply was dropped. The company now travels in `private_metadata`.
+3. **HR could not act on a speak-up report.** The check was `can_act`, which
+   resolves through a site — and a speak-up case has none. It is now
+   `can_view_speakup`, the same relation that let them see the report.
+4. **Speak-up had no waitpoint at all**, so there was nothing for an HR button to
+   complete. `speakup.await` now holds one, sharing the decision loop with
+   `case.route`.
+5. **The emergency card's "I am going now" button was un-pressable**: `assign`
+   required a staff UUID the button could not know. Omitting it now means
+   "assign to whoever clicked".
+6. **A missing `TWILIO_AUTH_TOKEN` made every webhook 500** instead of rejecting
+   it. Signature validation now returns a reason rather than throwing, and a
+   deployment with no token rejects with a critical audit event.
+7. **The audit helper could take down the request it was describing.** `getDb()`
+   was a default argument, so it ran *before* the try/catch meant to contain it.
+8. **`slackQuote` could exceed its own length cap** by appending an ellipsis past
+   the limit. Caught by a unit test.
+9. **Four high-severity transitive advisories** (`undici`, `ws`, via CopilotKit
+   and Trigger.dev) — pinned out with pnpm overrides rather than forking a
+   sponsor SDK.
+
 ## Installed tooling
 
 | What | Why |

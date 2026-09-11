@@ -462,66 +462,27 @@ export const caseRoute = validatedTask({
       );
     }
 
-    // The waitpoint token is the SLA. Completing it is a manager decision;
-    // letting it time out is an escalation.
-    let token = await wait.createToken({
-      timeout: slaTimeoutSpec(severity),
-      idempotencyKey: `case-decision:${caseId}:1`,
-    });
-    await withTenant(companyId, ({ tx }) =>
-      repo(companyId, tx).updateCase(caseId, { decisionTokenId: token.id }),
-    );
-
+    // The waitpoint token is the SLA: completing it is a manager decision,
+    // letting it expire is an escalation.
     await notifyManagers(companyId, caseId, { actions });
 
     let escalated = false;
+    const outcome = await awaitDecisions({
+      companyId,
+      caseId,
+      firstTimeout: slaTimeoutSpec(severity),
+      laterTimeout: `${Math.max(config.DEMO_SLA_MINUTES * 4, 10)}m`,
+      onTimeout: async () => {
+        if (escalated) return 'stop';
+        escalated = true;
+        await onSlaBreach(companyId, caseId);
+        // One longer window after escalating, then the case waits for a human
+        // to pick it up from the dashboard rather than holding a run open.
+        return 'continue';
+      },
+    });
 
-    for (let round = 1; round <= MAX_DECISIONS; round++) {
-      const result = await wait.forToken<CaseDecision>(token);
-
-      if (!result.ok) {
-        if (!escalated) {
-          escalated = true;
-          await onSlaBreach(companyId, caseId);
-          // One longer window after escalation, then we stop waiting and leave
-          // the case escalated for a human to pick up from the dashboard.
-          token = await wait.createToken({
-            timeout: `${Math.max(config.DEMO_SLA_MINUTES * 4, 10)}m`,
-            idempotencyKey: `case-decision:${caseId}:escalated`,
-          });
-          await withTenant(companyId, ({ tx }) =>
-            repo(companyId, tx).updateCase(caseId, { decisionTokenId: token.id }),
-          );
-          continue;
-        }
-        log.info('case_left_escalated', { caseId });
-        return { routed: true as const, outcome: 'escalated' as const };
-      }
-
-      const parsed = CaseDecision.safeParse(result.output);
-      if (!parsed.success) {
-        log.warn('decision_payload_invalid', { caseId });
-        return { routed: true as const, outcome: 'invalid_decision' as const };
-      }
-
-      const terminal = await applyManagerDecision({
-        companyId,
-        caseId,
-        decision: parsed.data,
-      });
-      if (terminal) return { routed: true as const, outcome: 'decided' as const };
-
-      // Non-terminal action (a question, an assignment): keep waiting.
-      token = await wait.createToken({
-        timeout: `${Math.max(config.DEMO_SLA_MINUTES * 4, 10)}m`,
-        idempotencyKey: `case-decision:${caseId}:${round + 1}`,
-      });
-      await withTenant(companyId, ({ tx }) =>
-        repo(companyId, tx).updateCase(caseId, { decisionTokenId: token.id }),
-      );
-    }
-
-    return { routed: true as const, outcome: 'max_decisions' as const };
+    return { routed: true as const, outcome };
   },
 });
 
@@ -648,11 +609,64 @@ export const caseRelay = validatedTask({
 // ---------------------------------------------------------------------------
 
 /**
+ * Waits for human decisions on a case and applies them, refreshing the waitpoint
+ * token after each non-terminal one. Shared by `case.route` and by the speak-up
+ * flow, which posts an HR-only card instead of routing to a site channel.
+ *
+ * Returns when the case is finished with, or when the token times out and
+ * `onTimeout` says to stop.
+ */
+export async function awaitDecisions(input: {
+  companyId: string;
+  caseId: string;
+  firstTimeout: string;
+  laterTimeout: string;
+  maxRounds?: number;
+  onTimeout?: (round: number) => Promise<'continue' | 'stop'>;
+}): Promise<'decided' | 'timed_out' | 'exhausted'> {
+  const { companyId, caseId } = input;
+
+  let token = await wait.createToken({
+    timeout: input.firstTimeout,
+    idempotencyKey: `case-decision:${caseId}:1`,
+  });
+  await withTenant(companyId, ({ tx }) => repo(companyId, tx).updateCase(caseId, { decisionTokenId: token.id }));
+
+  const maxRounds = input.maxRounds ?? MAX_DECISIONS;
+
+  for (let round = 1; round <= maxRounds; round++) {
+    const result = await wait.forToken<CaseDecision>(token);
+
+    if (!result.ok) {
+      const next = input.onTimeout ? await input.onTimeout(round) : 'stop';
+      if (next === 'stop') return 'timed_out';
+    } else {
+      const parsed = CaseDecision.safeParse(result.output);
+      if (!parsed.success) {
+        log.warn('decision_payload_invalid', { caseId });
+        return 'exhausted';
+      }
+      if (await applyManagerDecision({ companyId, caseId, decision: parsed.data })) return 'decided';
+    }
+
+    token = await wait.createToken({
+      timeout: input.laterTimeout,
+      idempotencyKey: `case-decision:${caseId}:${round + 1}`,
+    });
+    await withTenant(companyId, ({ tx }) =>
+      repo(companyId, tx).updateCase(caseId, { decisionTokenId: token.id }),
+    );
+  }
+
+  return 'exhausted';
+}
+
+/**
  * Applies one manager decision. Returns true when the case is finished with.
  * Every action here came from the allowlisted catalog and passed an FGA check in
  * the gateway before the waitpoint was completed.
  */
-async function applyManagerDecision(input: {
+export async function applyManagerDecision(input: {
   companyId: string;
   caseId: string;
   decision: CaseDecision;
@@ -708,13 +722,20 @@ async function applyManagerDecision(input: {
     }
 
     case 'assign': {
+      const assigneeId = action.params.staffId ?? actorStaffId;
+      const assigneeName =
+        assigneeId === actorStaffId
+          ? staffName
+          : ((await withTenant(companyId, ({ tx }) => repo(companyId, tx).staffById(assigneeId)))
+              ?.displayName ?? 'a colleague');
+
       await withTenant(companyId, async ({ tx }) => {
         const r = repo(companyId, tx);
         const row = await r.caseById(caseId);
         if (row && row.status !== 'in_progress') await r.transitionCase(caseId, 'in_progress');
       });
-      await postThreadNote(companyId, caseId, `${staffName} is handling this.`);
-      await updateCaseCard(companyId, caseId, { statusLine: `In progress with ${staffName}` });
+      await postThreadNote(companyId, caseId, `${assigneeName} is handling this.`);
+      await updateCaseCard(companyId, caseId, { statusLine: `In progress with ${assigneeName}` });
       return false;
     }
 
