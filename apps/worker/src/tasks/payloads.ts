@@ -27,7 +27,8 @@ export type IntakeRoutePayload = z.infer<typeof intakeRouteSchema>;
 export const caseOpenSchema = z.object({
   companyId: z.string().uuid(),
   workerId: z.string().uuid(),
-  messageId: z.string().uuid(),
+  /** Null when the case did not start from an inbound message (a policy handoff). */
+  messageId: z.string().uuid().nullable(),
   transcript: z.string().max(4000),
   language: z.string().max(8),
   category: CaseCategory,

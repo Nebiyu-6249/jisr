@@ -8,11 +8,13 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts', 'packages/**/*.test.ts'],
     // Config is read at module load; tests must not depend on a developer's .env.
+    // Fixed, obviously-fake 32-byte keys so tests never depend on a
+    // developer's .env - and so a real key can never leak into the repo.
     env: {
       NODE_ENV: 'test',
-      DATA_ENCRYPTION_KEY: 'dGVzdC1kYXRhLWtleS0zMi1ieXRlcy1sb25nLXBhZCE=',
-      SEALING_KEY: 'dGVzdC1zZWFsLWtleS0zMi1ieXRlcy1sb25nLXBhZGRkIQ==',
-      PHONE_HMAC_KEY: 'dGVzdC1obWFjLWtleS0zMi1ieXRlcy1sb25nLXBhZGQhIQ==',
+      DATA_ENCRYPTION_KEY: 'dGVzdC1kYXRhLWtleS1mb3ItdW5pdC10ZXN0cyEhISE=',
+      SEALING_KEY: 'dGVzdC1zZWFsaW5nLWtleS11bml0LXRlc3RzISEhISE=',
+      PHONE_HMAC_KEY: 'dGVzdC1obWFjLWtleS1mb3ItdW5pdC10ZXN0cyEhISE=',
     },
   },
   resolve: {
