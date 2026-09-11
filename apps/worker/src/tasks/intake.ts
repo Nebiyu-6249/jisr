@@ -42,10 +42,10 @@ import {
   prepareMedia,
   uploadMedia,
 } from '@jisr/integrations';
-import { chargeAudioSeconds, chargeTokens, isBudgetTripped } from '../lib/budget.js';
-import { trigger, validatedTask } from '../lib/task-kit.js';
-import { sendToWorker } from '../lib/outbound.js';
-import { intakeQueue } from '../queues.js';
+import { chargeAudioSeconds, chargeTokens, isBudgetTripped } from '../lib/budget';
+import { trigger, validatedTask } from '../lib/task-kit';
+import { sendToWorker } from '../lib/outbound';
+import { intakeQueue } from '../queues';
 
 /**
  * C1 — intake.

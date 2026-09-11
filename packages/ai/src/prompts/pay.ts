@@ -1,5 +1,5 @@
 import { PayEvidence, wrapUntrusted } from '@jisr/core';
-import { systemPrompt } from './shared.js';
+import { systemPrompt } from './shared';
 
 /**
  * F3 step 1 — reading a timesheet or payslip photo.

@@ -1,5 +1,5 @@
 import { ClarifyingQuestion, ReadBack, Translation, wrapUntrusted } from '@jisr/core';
-import { NO_PROMISE_RULE, PLAIN_LANGUAGE_RULE, glossaryRule, systemPrompt } from './shared.js';
+import { NO_PROMISE_RULE, PLAIN_LANGUAGE_RULE, glossaryRule, systemPrompt } from './shared';
 
 /** C1 steps 9-10 and C3 — everything Jisr says back to a worker. */
 export const WORKER_MESSAGE_PROMPT_VERSION = 'worker-messages@2';

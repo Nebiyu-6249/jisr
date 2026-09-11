@@ -1,6 +1,6 @@
 import { log, type SecurityEvent } from '@jisr/core';
-import { getDb, type DbOrTx } from './client.js';
-import { auditLog } from './schema.js';
+import { getDb, type DbOrTx } from './client';
+import { auditLog } from './schema';
 
 /**
  * Security events go two places: `audit_log` (insert-only for the app role) and

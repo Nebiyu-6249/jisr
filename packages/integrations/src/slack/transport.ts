@@ -1,6 +1,6 @@
 import { WebClient } from '@slack/web-api';
 import { NotConfiguredError, config, log } from '@jisr/core';
-import type { Block } from './blocks.js';
+import type { Block } from './blocks';
 
 /**
  * Slack has exactly two entry points for case traffic — `notifyManagers` and

@@ -33,12 +33,12 @@ import {
 } from '@jisr/core';
 import { audit, repo, withTenant } from '@jisr/db';
 import { fga, notifyManagers, postEscalation, postThreadNote, updateCaseCard } from '@jisr/integrations';
-import { chargeTokens } from '../lib/budget.js';
-import { trigger, triggerAndWait, validatedTask } from '../lib/task-kit.js';
-import { caseOpenSchema, intakeRouteSchema } from './payloads.js';
-import { dashboardCaseUrl, loadCaseContext, slaDueAt, slaTimeoutSpec } from '../lib/case-context.js';
-import { sendToWorker } from '../lib/outbound.js';
-import { caseQueue } from '../queues.js';
+import { chargeTokens } from '../lib/budget';
+import { trigger, triggerAndWait, validatedTask } from '../lib/task-kit';
+import { caseOpenSchema, intakeRouteSchema } from './payloads';
+import { dashboardCaseUrl, loadCaseContext, slaDueAt, slaTimeoutSpec } from '../lib/case-context';
+import { sendToWorker } from '../lib/outbound';
+import { caseQueue } from '../queues';
 
 /**
  * The case lifecycle: clarify, read back, route, wait for a human, relay the
@@ -609,7 +609,7 @@ export const caseRelay = validatedTask({
 
     if (ctx.case.isSpeakup) {
       // F2: the reporter is addressed through the sealed identity, never by id.
-      const { sendToSealedReporter } = await import('../lib/outbound.js');
+      const { sendToSealedReporter } = await import('../lib/outbound');
       await sendToSealedReporter({
         companyId,
         caseId,

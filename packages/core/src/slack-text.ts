@@ -1,4 +1,4 @@
-import { stripInvisible } from './invisible.js';
+import { stripInvisible } from './invisible';
 
 /**
  * Slack renders `&`, `<` and `>` specially: unescaped worker text could produce

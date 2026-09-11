@@ -1,5 +1,5 @@
 import { PolicyAnswer, wrapUntrusted } from '@jisr/core';
-import { NO_PROMISE_RULE, PLAIN_LANGUAGE_RULE, systemPrompt } from './shared.js';
+import { NO_PROMISE_RULE, PLAIN_LANGUAGE_RULE, systemPrompt } from './shared';
 
 /**
  * C5 — policy questions, answered only from the company handbook and official

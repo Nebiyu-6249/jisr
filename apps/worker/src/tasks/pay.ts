@@ -23,9 +23,9 @@ import {
   signedUrl,
   slackTransport,
 } from '@jisr/integrations';
-import { chargeTokens } from '../lib/budget.js';
-import { trigger, validatedTask } from '../lib/task-kit.js';
-import { loadCaseContext } from '../lib/case-context.js';
+import { chargeTokens } from '../lib/budget';
+import { trigger, validatedTask } from '../lib/task-kit';
+import { loadCaseContext } from '../lib/case-context';
 
 /**
  * F3 — the two-person rule for pay corrections.

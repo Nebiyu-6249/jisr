@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ConfigError } from './errors.js';
+import { ConfigError } from './errors';
 
 /**
  * Config is read once, at module load, from process.env.

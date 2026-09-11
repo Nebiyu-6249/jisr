@@ -1,5 +1,5 @@
 import { Redaction, wrapUntrusted } from '@jisr/core';
-import { PLAIN_LANGUAGE_RULE, systemPrompt } from './shared.js';
+import { PLAIN_LANGUAGE_RULE, systemPrompt } from './shared';
 
 /**
  * F2 step 3 — redaction.

@@ -1,4 +1,4 @@
-import { redactPii } from './redact.js';
+import { redactPii } from './redact';
 
 /**
  * Structured JSON logs. Two rules, enforced here rather than remembered at call sites:

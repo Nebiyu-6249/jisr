@@ -4,9 +4,9 @@ import { callLLM, policyAnswerSchema, policySystem, policyUser, POLICY_PROMPT_VE
 import { log, sanitizeText, scrubForModel } from '@jisr/core';
 import { repo, withTenant } from '@jisr/db';
 import { isExaConfigured, searchOfficialSources } from '@jisr/integrations';
-import { chargeTokens } from '../lib/budget.js';
-import { sendToWorker } from '../lib/outbound.js';
-import { trigger, validatedTask } from '../lib/task-kit.js';
+import { chargeTokens } from '../lib/budget';
+import { sendToWorker } from '../lib/outbound';
+import { trigger, validatedTask } from '../lib/task-kit';
 
 /**
  * C5 — policy questions.
