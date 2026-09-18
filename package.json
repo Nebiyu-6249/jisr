@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/node": "22.20.2",
     "tsx": "4.23.13",
-    "typescript": "5.9.3",
+    "typescript": "7.0.2",
     "vitest": "3.2.7",
     "zod": "3.25.76",
     "qrcode": "1.5.4",
