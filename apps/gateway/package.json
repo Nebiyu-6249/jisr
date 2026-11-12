@@ -15,6 +15,6 @@
     "@jisr/integrations": "workspace:*",
     "@trigger.dev/sdk": "4.5.16",
     "hono": "4.13.7",
-    "zod": "3.25.76"
+    "zod": "4.6.5"
   }
 }
