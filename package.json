@@ -20,7 +20,7 @@
     "language-test": "tsx scripts/language-test.ts"
   },
   "devDependencies": {
-    "@types/node": "22.20.2",
+    "@types/node": "26.6.1",
     "tsx": "4.23.13",
     "typescript": "5.9.3",
     "vitest": "3.2.7",
