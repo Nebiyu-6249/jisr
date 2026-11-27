@@ -8,13 +8,13 @@
     "start": "tsx src/index.ts"
   },
   "dependencies": {
-    "@copilotkit/channels": "0.9.2",
-    "@hono/node-server": "2.1.1",
+    "@copilotkit/channels": "0.13.0",
+    "@hono/node-server": "2.1.11",
     "@jisr/core": "workspace:*",
     "@jisr/db": "workspace:*",
     "@jisr/integrations": "workspace:*",
-    "@trigger.dev/sdk": "4.5.16",
-    "hono": "4.13.7",
+    "@trigger.dev/sdk": "4.8.10",
+    "hono": "4.13.21",
     "zod": "3.25.76"
   }
 }
